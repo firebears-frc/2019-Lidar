@@ -161,7 +161,11 @@ void setup() {
   
   Serial.println("Starting...");
   setID();
- 
+
+   pinMode(CARGO_ACQ, OUTPUT);
+   pinMode(CARGO_LEFT, OUTPUT);
+   pinMode(CARGO_RIGHT, OUTPUT);
+   pinMode(HATCH_ACQ, OUTPUT);
 }
 
 void loop() {
