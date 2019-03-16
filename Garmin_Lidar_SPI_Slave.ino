@@ -78,8 +78,8 @@ void loop() {
   int _distance = distanceFast(true);
   int idistanceCm = _distance - 24;
   //Restrict range  1 -250 cm. If > 250 send 255 so reciever knows out of range
-  if(idistanceCm > 250) i{distanceCm = 255;} // Max distance 250 cm = 100 In or 8ft
-  if(idistanceCm < 1) i{distanceCm = 1;} // Min distance 1 cm. 
+  if(idistanceCm > 250) {idistanceCm = 255;} // Max distance 250 cm = 100 In or 8ft
+  if(idistanceCm < 1) {idistanceCm = 1;} // Min distance 1 cm. 
   unsigned int uidistanceCm = (unsigned int)idistanceCm;
   byte udistanceBYTE = lowByte(uidistanceCm);
   Serial.print("  Cm:  ");
