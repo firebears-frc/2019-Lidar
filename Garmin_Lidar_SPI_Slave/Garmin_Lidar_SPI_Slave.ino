@@ -77,8 +77,9 @@ void loop() {
    // Take a measurement with receiver bias correction and print to serial terminal
   int _distance = distanceFast(true);
   int idistanceCm = _distance - 24;
-  //float distanceCm = (float)idistanceCm;
-  if(idistanceCm > 250) i{distanceCm = 0;} // Max distance 250 cm = 100 In or 8ft 
+  //Restrict range  1 -250 cm. If > 250 send 255 so reciever knows out of range
+  if(idistanceCm > 250) {idistanceCm = 255;} // Max distance 250 cm = 100 In or 8ft
+  if(idistanceCm < 1) {idistanceCm = 1;} // Min distance 1 cm. 
   unsigned int uidistanceCm = (unsigned int)idistanceCm;
   byte udistanceBYTE = lowByte(uidistanceCm);
   Serial.print("  Cm:  ");
