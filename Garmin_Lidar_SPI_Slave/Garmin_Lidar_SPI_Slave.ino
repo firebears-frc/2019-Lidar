@@ -4,9 +4,7 @@
 #include <LIDARLite.h>
 
 LIDARLite myLidarLite;
-
-
-  
+ 
 int distance;
 boolean SSlast = LOW;
 
@@ -53,30 +51,40 @@ bool MISO_Control(){
 }
 
 void setup() { 
-  myLidarLite.begin(0, true); // Set configuration to default and I2C to 400 kHz
+  Serial.begin(115200);
+ 
+  myLidarLite.begin(0, true);/*
+   ----------------------------------------------------------------------------
+    configuration:  Default 0.
+      0: Default mode, balanced performance.
+      1: Short range, high speed. Uses 0x1d maximum acquisition count.
+      2: Default range, higher speed short range. Turns on quick termination
+          detection for faster measurements at short range (with decreased
+          accuracy)
+      3: Maximum range. Uses 0xff maximum acquisition count.
+      4: High sensitivity detection. Overrides default valid measurement detection
+          algorithm, and uses a threshold value for high sensitivity and noise.
+      5: Low sensitivity detection. Overrides default valid measurement detection
+          algorithm, and uses a threshold value for low sensitivity and noise.
+    lidarliteAddress: Default 0x62. Fill in new address here if changed. See
+      operating manual for instructions.
+  */
+  myLidarLite.configure(0); // Change this number to try out alternate configurations
 
-  myLidarLite.write(0x02, 0x0d); // Maximum acquisition count of 0x0d. (default is 0x80)
-  myLidarLite.write(0x04, 0b00000100); // Use non-default reference acquisition count
-  myLidarLite.write(0x12, 0x03); // Reference acquisition count of 3 (default is 5)
-
-
-  Serial.begin(9600);
   // wait until serial port opens for native USB devices
   while (! Serial) {
     delay(1);
   }
-
+ 
   SlaveInit();
   Serial.println(F("Setup complete"));
 }
 
-
-
-void loop() {
-
+void loop() 
+{
    // Take a measurement with receiver bias correction and print to serial terminal
-  int _distance = distanceFast(true);
-  int idistanceCm = _distance - 24;
+  int _distance = myLidarLite.distance(false);
+  int idistanceCm = _distance ;
   //Restrict range  1 -250 cm. If > 250 send 255 so reciever knows out of range
   if(idistanceCm > 250) {idistanceCm = 255;} // Max distance 250 cm = 100 In or 8ft
   if(idistanceCm < 1) {idistanceCm = 1;} // Min distance 1 cm. 
@@ -87,62 +95,7 @@ void loop() {
   Serial.print("  byte: ");
   Serial.println(udistanceBYTE);
   
-  if(MISO_Control()){
+ if(MISO_Control()){  
   byte rx = SPItransfer(udistanceBYTE);
   } 
-}
-
-int distanceFast(bool biasCorrection)
-{
-  byte isBusy = 1;
-  int distance;
-  int loopCount;
-
-  // Poll busy bit in status register until device is idle
-  while(isBusy)
-  {
-    // Read status register
-    Wire.beginTransmission(LIDARLITE_ADDR_DEFAULT);
-    Wire.write(0x01);
-    Wire.endTransmission();
-    Wire.requestFrom(LIDARLITE_ADDR_DEFAULT, 1);
-    isBusy = Wire.read();
-    isBusy = bitRead(isBusy,0); // Take LSB of status register, busy bit
-
-    loopCount++; // Increment loop counter
-    // Stop status register polling if stuck in loop
-    if(loopCount > 9999)
-    {
-      break;
-    }
-  }
-
-  // Send measurement command
-  Wire.beginTransmission(LIDARLITE_ADDR_DEFAULT);
-  Wire.write(0X00); // Prepare write to register 0x00
-  if(biasCorrection == true)
-  {
-    Wire.write(0X04); // Perform measurement with receiver bias correction
-  }
-  else
-  {
-    Wire.write(0X03); // Perform measurement without receiver bias correction
-  }
-  Wire.endTransmission();
-
-  // Immediately read previous distance measurement data. This is valid until the next measurement finishes.
-  // The I2C transaction finishes before new distance measurement data is acquired.
-  // Prepare 2 byte read from registers 0x0f and 0x10
-  Wire.beginTransmission(LIDARLITE_ADDR_DEFAULT);
-  Wire.write(0x8f);
-  Wire.endTransmission();
-
-  // Perform the read and repack the 2 bytes into 16-bit word
-  Wire.requestFrom(LIDARLITE_ADDR_DEFAULT, 2);
-  distance = Wire.read();
-  distance <<= 8;
-  distance |= Wire.read();
-
-  // Return the measured distance
-  return distance;
 }
